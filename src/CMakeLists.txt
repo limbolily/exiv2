@@ -133,13 +133,13 @@ SET( LIBEXIV2_SRC         asfvideo.cpp
 ##
 # add png*.cpp files if PNG support requested
 IF( EXIV2_ENABLE_PNG )
-    IF( ZLIB_FOUND )
+  #IF( ZLIB_FOUND )
         SET( LIBEXIV2_SRC ${LIBEXIV2_SRC}
                           pngchunk.cpp
                           pngimage.cpp
            )
         set( LIBEXIV2_HDR ${LIBEXIV2_HDR} pngimage.hpp )
-    ENDIF( ZLIB_FOUND )
+  #ENDIF( ZLIB_FOUND )
 ENDIF( EXIV2_ENABLE_PNG )
 
 ##
@@ -175,116 +175,124 @@ ENDIF( MSVC )
 
 ##
 # msvn tuning
-include(../CMake_msvc.txt)
-msvc_runtime_configure(${EXIV2_ENABLE_SHARED})
+#include(../CMake_msvc.txt)
+#msvc_runtime_configure(${EXIV2_ENABLE_SHARED})
 
 # ******************************************************************************
 # exiv2lib library
 
-ADD_LIBRARY( exiv2lib ${STATIC_FLAG} ${LIBEXIV2_SRC} ${LIBEXIV2_HDR} )
+#ADD_LIBRARY( exiv2lib ${STATIC_FLAG} ${LIBEXIV2_SRC} ${LIBEXIV2_HDR} )
+yong_add_library(exiv2
+  SOURCES ${LIBEXIV2_SRC} ${LIBEXIV2_HDR})
 
-SET_TARGET_PROPERTIES( exiv2lib PROPERTIES
-    VERSION       ${GENERIC_LIB_VERSION}
-    SOVERSION     ${GENERIC_LIB_SOVERSION}
-    DEFINE_SYMBOL EXV_BUILDING_LIB
-    OUTPUT_NAME   exiv2
-)
+#SET_TARGET_PROPERTIES( exiv2lib PROPERTIES
+#    VERSION       ${GENERIC_LIB_VERSION}
+#    SOVERSION     ${GENERIC_LIB_SOVERSION}
+#    DEFINE_SYMBOL EXV_BUILDING_LIB
+#    OUTPUT_NAME   exiv2
+#)
 
-if ( MSVC ) 
-    source_group("Header Files" FILES ${LIBEXIV2_HDR} )
-    TARGET_LINK_LIBRARIES( exiv2lib ${EXPAT_LIBRARIES} )
-else()
-    if ( NOT MINGW )
-        TARGET_LINK_LIBRARIES( exiv2lib dl ${EXPAT_LIBRARIES} )
-    else()
-        TARGET_LINK_LIBRARIES( exiv2lib    ${EXPAT_LIBRARIES} )
-    endif()
-endif()
+#if ( MSVC ) 
+#    source_group("Header Files" FILES ${LIBEXIV2_HDR} )
+#    TARGET_LINK_LIBRARIES( exiv2lib ${EXPAT_LIBRARIES} )
+#else()
+#    if ( NOT MINGW )
+#        TARGET_LINK_LIBRARIES( exiv2lib dl ${EXPAT_LIBRARIES} )
+#    else()
+#        TARGET_LINK_LIBRARIES( exiv2lib    ${EXPAT_LIBRARIES} )
+#    endif()
+#endif()
 
-if( EXIV2_ENABLE_LIBXMP )
-    ADD_DEPENDENCIES( exiv2lib xmp )
-    LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/$(ConfigurationName))
-    TARGET_LINK_LIBRARIES( exiv2lib xmp )
-ENDIF()
+#if( EXIV2_ENABLE_LIBXMP )
+#    ADD_DEPENDENCIES( exiv2lib xmp )
+#    LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/$(ConfigurationName))
+#    TARGET_LINK_LIBRARIES( exiv2lib xmp )
+#ENDIF()
 
 IF( EXIV2_ENABLE_PNG )
-    IF( ZLIB_FOUND )
-        IF( MSVC )
-            if ( EXIV2_ENABLE_SHARED )      
-                TARGET_LINK_LIBRARIES( exiv2lib optimized ${ZLIB_LIBRARIES} debug ${ZLIB_LIBRARIES}d )
-            else()
-                TARGET_LINK_LIBRARIES( exiv2lib optimized zlibstatic.lib debug zlibstaticd.lib )
-            endif()
-        ELSE()
-            TARGET_LINK_LIBRARIES( exiv2lib ${ZLIB_LIBRARIES} )
-        ENDIF()
-    ENDIF()
+  #IF( ZLIB_FOUND )
+  #IF( MSVC )
+  #          if ( EXIV2_ENABLE_SHARED )      
+  #              TARGET_LINK_LIBRARIES( exiv2lib optimized ${ZLIB_LIBRARIES} debug ${ZLIB_LIBRARIES}d )
+  #          else()
+  #              TARGET_LINK_LIBRARIES( exiv2lib optimized zlibstatic.lib debug zlibstaticd.lib )
+  #          endif()
+  #      ELSE()
+  #          TARGET_LINK_LIBRARIES( exiv2lib ${ZLIB_LIBRARIES} )
+  #      ENDIF()
+  #  ENDIF()
+  yong_add_dependence(exiv2 exiv2
+    DEPENDENT_PROJECT zlib
+    COMMIT_HASH 04ad1c7e937d2835c1c54c50bec9cfaa4f43a1c8
+    DEPENDENT_LIBS zlib)
 ENDIF()
 
-IF( EXIV2_ENABLE_NLS )
-    TARGET_LINK_LIBRARIES( exiv2lib ${LIBINTL_LIBRARIES} )
-ENDIF( EXIV2_ENABLE_NLS )
+#IF( EXIV2_ENABLE_NLS )
+#    TARGET_LINK_LIBRARIES( exiv2lib ${LIBINTL_LIBRARIES} )
+#ENDIF( EXIV2_ENABLE_NLS )
 
-IF( ICONV_FOUND )
-    TARGET_LINK_LIBRARIES( exiv2lib ${ICONV_LIBRARIES} )
-ENDIF( ICONV_FOUND )
+#IF( ICONV_FOUND )
+#    TARGET_LINK_LIBRARIES( exiv2lib ${ICONV_LIBRARIES} )
+#ENDIF( ICONV_FOUND )
 
-IF (CYGWIN OR MINGW)
-    TARGET_LINK_LIBRARIES( exiv2lib psapi )
-ENDIF(CYGWIN OR MINGW)
+#IF (CYGWIN OR MINGW)
+#    TARGET_LINK_LIBRARIES( exiv2lib psapi )
+#ENDIF(CYGWIN OR MINGW)
 
 
 ##
 # copy header files (TODO: rewrite for NMake)
-IF (MSVC )
-    if (OUT_OF_SOURCE) 
-        ADD_CUSTOM_COMMAND(
-          TARGET exiv2lib
-          PRE_BUILD
-          COMMAND set S=$(SolutionDir)..\\src\nset I=$(SolutionDir)include\nset E=%I%\\exiv2\nif NOT exist %I% mkdir %I%\nif NOT exist %E% mkdir %E%\ncopy /y %S%\\*.h %E%\ncopy /y %S%\\*.hpp %E%
-        )
-    else()
-        ADD_CUSTOM_COMMAND(
-          TARGET exiv2lib
-          PRE_BUILD
-          COMMAND set S=$(SolutionDir)src\nset I=$(SolutionDir)include\nset E=%I%\\exiv2\nif NOT exist %I% mkdir %I%\nif NOT exist %E% mkdir %E%\ncopy /y %S%\\*.h %E%\ncopy /y %S%\\*.hpp %E%
-        )
-    endif()
-ENDIF()
+#IF (MSVC )
+#    if (OUT_OF_SOURCE) 
+#        ADD_CUSTOM_COMMAND(
+#          TARGET exiv2lib
+#          PRE_BUILD
+#          COMMAND set S=$(SolutionDir)..\\src\nset I=$(SolutionDir)include\nset E=%I%\\exiv2\nif NOT exist %I% mkdir %I%\nif NOT exist %E% mkdir %E%\ncopy /y %S%\\*.h %E%\ncopy /y %S%\\*.hpp %E%
+#        )
+#    else()
+#        ADD_CUSTOM_COMMAND(
+#          TARGET exiv2lib
+#          PRE_BUILD
+#          COMMAND set S=$(SolutionDir)src\nset I=$(SolutionDir)include\nset E=%I%\\exiv2\nif NOT exist %I% mkdir %I%\nif NOT exist %E% mkdir %E%\ncopy /y %S%\\*.h %E%\ncopy /y %S%\\*.hpp %E%
+#        )
+#    endif()
+#ENDIF()
 
 ##
 # copy zlib and expat dlls to output directory (TODO: rewrite for NMake)
-IF ( MSVC AND EXIV2_ENABLE_SHARED )
-    get_filename_component(EXPAT_LIBRARY_DIR ${EXPAT_LIBRARY} PATH)
-    string(REGEX REPLACE "/" "\\\\" EXPAT_LIBRARY_DIR ${EXPAT_LIBRARY_DIR})
-    get_filename_component(ZLIB_LIBRARY_DIR ${ZLIB_LIBRARY} PATH)
-    string(REGEX REPLACE "/" "\\\\" ZLIB_LIBRARY_DIR ${ZLIB_LIBRARY_DIR})
-    ADD_CUSTOM_COMMAND(
-      TARGET exiv2lib
-      POST_BUILD
-      COMMAND copy /y ${EXPAT_LIBRARY_DIR}\\*.dll $(SolutionDir)\\bin\\${P_DIR}\\${T_DIR}\\$(ConfigurationName)
-    )
-    ADD_CUSTOM_COMMAND(
-      TARGET exiv2lib
-      POST_BUILD
-      COMMAND copy /y ${ZLIB_LIBRARY_DIR}\\*.dll $(SolutionDir)\\bin\\${P_DIR}\\${T_DIR}\\$(ConfigurationName)
-    )
-ENDIF()
-INSTALL( TARGETS exiv2lib ${INSTALL_TARGET_STANDARD_ARGS} )
+#IF ( MSVC AND EXIV2_ENABLE_SHARED )
+#    get_filename_component(EXPAT_LIBRARY_DIR ${EXPAT_LIBRARY} PATH)
+#    string(REGEX REPLACE "/" "\\\\" EXPAT_LIBRARY_DIR ${EXPAT_LIBRARY_DIR})
+#    get_filename_component(ZLIB_LIBRARY_DIR ${ZLIB_LIBRARY} PATH)
+#    string(REGEX REPLACE "/" "\\\\" ZLIB_LIBRARY_DIR ${ZLIB_LIBRARY_DIR})
+#    ADD_CUSTOM_COMMAND(
+#      TARGET exiv2lib
+#      POST_BUILD
+#      COMMAND copy /y ${EXPAT_LIBRARY_DIR}\\*.dll $(SolutionDir)\\bin\\${P_DIR}\\${T_DIR}\\$(ConfigurationName)
+#    )
+#    ADD_CUSTOM_COMMAND(
+#      TARGET exiv2lib
+#      POST_BUILD
+#      COMMAND copy /y ${ZLIB_LIBRARY_DIR}\\*.dll $(SolutionDir)\\bin\\${P_DIR}\\${T_DIR}\\$(ConfigurationName)
+#    )
+#ENDIF()
+#INSTALL( TARGETS exiv2lib ${INSTALL_TARGET_STANDARD_ARGS} )
+yong_install_header_files(exiv2 exiv2 ${LIBEXIV2_HDR})
+yong_add_library_end(exiv2)
 
-# ******************************************************************************
-# exiv2 application
-ADD_EXECUTABLE( exiv2 ${EXIV2_SRC} )
-TARGET_LINK_LIBRARIES( exiv2 exiv2lib )
-INSTALL( TARGETS exiv2 ${INSTALL_TARGET_STANDARD_ARGS} )
-
-# ******************************************************************************
-# Headers
-INSTALL( FILES ${LIBEXIV2_HDR} DESTINATION include/exiv2 )
-
-# ******************************************************************************
-# Man page
-INSTALL( FILES exiv2.1 DESTINATION man/man1 )
+## ******************************************************************************
+## exiv2 application
+#ADD_EXECUTABLE( exiv2 ${EXIV2_SRC} )
+#TARGET_LINK_LIBRARIES( exiv2 exiv2lib )
+#INSTALL( TARGETS exiv2 ${INSTALL_TARGET_STANDARD_ARGS} )
+#
+## ******************************************************************************
+## Headers
+#INSTALL( FILES ${LIBEXIV2_HDR} DESTINATION include/exiv2 )
+#
+## ******************************************************************************
+## Man page
+#INSTALL( FILES exiv2.1 DESTINATION man/man1 )
 
 # That's all Folks!
 ##

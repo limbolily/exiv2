@@ -6,6 +6,8 @@
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
+include("yong_injector/injector.cmake")
+
 ##
 # Running cmake in a tree in which we have run ./configure ; make 
 # creates src/exv_conf.h which conflicts with cmake's own exv_conf.h
@@ -18,8 +20,9 @@ endif()
 ##
 
 SET(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
-CMAKE_MINIMUM_REQUIRED( VERSION 2.6 )
-PROJECT( exiv2 )
+CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
+#PROJECT( exiv2 )
+yong_project(exiv2 CXX)
 
 SET( PACKAGE_COPYRIGHT      "Andreas Huggel" )
 SET( PACKAGE_BUGREPORT      "ahuggel@gmx.net" )
@@ -33,16 +36,25 @@ SET( GENERIC_LIB_VERSION    "13.0.0" )
 SET( GENERIC_LIB_SOVERSION  "13" )
 
 # options and their default values
-OPTION( EXIV2_ENABLE_SHARED        "Build exiv2 as a shared library (dll)"                 ON  )
-OPTION( EXIV2_ENABLE_XMP           "Build with XMP metadata support"                       ON  )
-OPTION( EXIV2_ENABLE_LIBXMP        "Build a static convenience Library for XMP"            ON  )
-OPTION( EXIV2_ENABLE_PNG           "Build with png support (requires libz)"                ON  )
-OPTION( EXIV2_ENABLE_NLS           "Build native language support (requires gettext)"      ON  )
-OPTION( EXIV2_ENABLE_PRINTUCS2     "Build with Printucs2"                                  ON  )
-OPTION( EXIV2_ENABLE_LENSDATA      "Build including lens data"                             ON  )
-OPTION( EXIV2_ENABLE_COMMERCIAL    "Build with the EXV_COMMERCIAL_VERSION symbol set"      OFF )
-OPTION( EXIV2_ENABLE_BUILD_SAMPLES "Build the unit tests"                                  ON  )
-OPTION( EXIV2_ENABLE_BUILD_PO      "Build translations files"                              OFF )
+#OPTION( EXIV2_ENABLE_SHARED        "Build exiv2 as a shared library (dll)"                 ON  )
+#OPTION( EXIV2_ENABLE_XMP           "Build with XMP metadata support"                       ON  )
+set(EXIV2_ENABLE_XMP OFF)
+#OPTION( EXIV2_ENABLE_LIBXMP        "Build a static convenience Library for XMP"            ON  )
+set(EXIV2_ENABLE_LIBXMP OFF)
+#OPTION( EXIV2_ENABLE_PNG           "Build with png support (requires libz)"                ON  )
+yong_option(EXIV2_ENABLE_PNG "Build with png support (requires libz)" ON)
+#OPTION( EXIV2_ENABLE_NLS           "Build native language support (requires gettext)"      ON  )
+set(EXIV2_ENABLE_NLS OFF)
+#OPTION( EXIV2_ENABLE_PRINTUCS2     "Build with Printucs2"                                  ON  )
+set(EXIV2_ENABLE_PRINTUCS2 OFF)
+#OPTION( EXIV2_ENABLE_LENSDATA      "Build including lens data"                             ON  )
+yong_option(EXIV2_ENABLE_LENSDATA "Build including lens data" ON)
+#OPTION( EXIV2_ENABLE_COMMERCIAL    "Build with the EXV_COMMERCIAL_VERSION symbol set"      OFF )
+yong_option(EXIV2_ENABLE_COMMERCIAL "Build with the EXV_COMMERCIAL_VERSION symbol set" OFF)
+#OPTION( EXIV2_ENABLE_BUILD_SAMPLES "Build the unit tests"                                  ON  )
+set(EXIV2_ENABLE_BUILD_SAMPLES OFF)
+#OPTION( EXIV2_ENABLE_BUILD_PO      "Build translations files"                              OFF )
+set(EXIV2_ENABLE_BUILD_PO OFF)
 
 IF( MINGW OR UNIX )
     IF ( CMAKE_CXX_COMPILER STREQUAL "g++" OR CMAKE_C_COMPILER STREQUAL "gcc" ) 
@@ -57,67 +69,72 @@ IF( MINGW OR UNIX )
     ENDIF()
 ENDIF( MINGW OR UNIX )
 
+if (BUILD_SHARED_LIBS)
+  set(${EXIV2_ENABLE_SHARED} ON)
+else()
+  set(${EXIV2_ENABLE_SHARED} OFF)
+endif()
 
-if( MSVC )
-    include(CMake_msvc.txt)
-    msvc_runtime_report()
-    msvc_runtime_configure(${EXIV2_ENABLE_SHARED})
-    msvc_runtime_report()
-    
-    ADD_DEFINITIONS(-DPSAPI_VERSION=1) # to be compatible with <= WinVista (#905)  
-    
-    set(E expat-2.1.0)
-    set(Z zlib-1.2.7)
-    
-    if( NOT IS_DIRECTORY ./../${E} )
-        set(OUT_OF_SOURCE 1)
-    endif()
-    
-    # link dependent libraries
-    if ( NOT EXPAT_LIBRARY  )
-        set(EXPAT_LIBRARY      ${CMAKE_SOURCE_DIR}/../${E}/$(ConfigurationName)/expat)
-        set(EXPAT_INCLUDE_DIR  ${CMAKE_SOURCE_DIR}/../${E}/lib)
-        include_directories( ${EXPAT_INCLUDE_DIR} msvc64\\include src\\include)
-    endif()
-    
-    FIND_PACKAGE(ZLIB QUIET)
-    if ( NOT ZLIB_FOUND )
-        set(ZLIB_LIBRARY       ${CMAKE_SOURCE_DIR}/../${Z}/$(ConfigurationName)/zlib)
-        set(ZLIB_INCLUDE_DIR   ${CMAKE_SOURCE_DIR}/../${Z})
-    endif()
-    include_directories(${ZLIB_INCLUDE_DIR})
-    
-    if ( EXIV2_ENABLE_SHARED )
-        add_library(${E} SHARED IMPORTED)
-        add_library(${Z} SHARED IMPORTED)
-    endif()
+#if( MSVC )
+#    include(CMake_msvc.txt)
+#    msvc_runtime_report()
+#    msvc_runtime_configure(${EXIV2_ENABLE_SHARED})
+#    msvc_runtime_report()
+#    
+#    ADD_DEFINITIONS(-DPSAPI_VERSION=1) # to be compatible with <= WinVista (#905)  
+#    
+#    set(E expat-2.1.0)
+#    set(Z zlib-1.2.7)
+#    
+#    if( NOT IS_DIRECTORY ./../${E} )
+#        set(OUT_OF_SOURCE 1)
+#    endif()
+#    
+#    # link dependent libraries
+#    if ( NOT EXPAT_LIBRARY  )
+#        set(EXPAT_LIBRARY      ${CMAKE_SOURCE_DIR}/../${E}/$(ConfigurationName)/expat)
+#        set(EXPAT_INCLUDE_DIR  ${CMAKE_SOURCE_DIR}/../${E}/lib)
+#        include_directories( ${EXPAT_INCLUDE_DIR} msvc64\\include src\\include)
+#    endif()
+#    
+#    FIND_PACKAGE(ZLIB QUIET)
+#    if ( NOT ZLIB_FOUND )
+#        set(ZLIB_LIBRARY       ${CMAKE_SOURCE_DIR}/../${Z}/$(ConfigurationName)/zlib)
+#        set(ZLIB_INCLUDE_DIR   ${CMAKE_SOURCE_DIR}/../${Z})
+#    endif()
+#    include_directories(${ZLIB_INCLUDE_DIR})
+#    
+#    if ( EXIV2_ENABLE_SHARED )
+#        add_library(${E} SHARED IMPORTED)
+#        add_library(${Z} SHARED IMPORTED)
+#    endif()
+#
+#    ##
+#    # Set the output directory
+#    # x64/Win32
+#    if( CMAKE_SIZEOF_VOID_P MATCHES 8 )
+#        SET( P_DIR x64)
+#    else()
+#        set( P_DIR Win32 )
+#    endif()
+#
+#    # DLL/static build
+#    if( EXIV2_ENABLE_SHARED )
+#        set( T_DIR Dynamic )
+#    else()
+#        set( T_DIR Static)
+#    endif()
+#
+#    set(B_DIR ${PROJECT_BINARY_DIR}/bin/${P_DIR}/${T_DIR})
+#    set(CMAKE_CURRENT_BINARY_DIR ${B_DIR})
+#    set(EXECUTABLE_OUTPUT_PATH   ${B_DIR})
+#    set(LIBRARY_OUTPUT_PATH      ${B_DIR})
+#endif( MSVC )
 
-    ##
-    # Set the output directory
-    # x64/Win32
-    if( CMAKE_SIZEOF_VOID_P MATCHES 8 )
-        SET( P_DIR x64)
-    else()
-        set( P_DIR Win32 )
-    endif()
-
-    # DLL/static build
-    if( EXIV2_ENABLE_SHARED )
-        set( T_DIR Dynamic )
-    else()
-        set( T_DIR Static)
-    endif()
-
-    set(B_DIR ${PROJECT_BINARY_DIR}/bin/${P_DIR}/${T_DIR})
-    set(CMAKE_CURRENT_BINARY_DIR ${B_DIR})
-    set(EXECUTABLE_OUTPUT_PATH   ${B_DIR})
-    set(LIBRARY_OUTPUT_PATH      ${B_DIR})
-endif( MSVC )
-
-IF( EXIV2_ENABLE_XMP )
-    SET( HAVE_XMP_TOOLKIT ON )
-    SET( XMPLIB "do" )
-ENDIF( EXIV2_ENABLE_XMP )
+#IF( EXIV2_ENABLE_XMP )
+#    SET( HAVE_XMP_TOOLKIT ON )
+#    SET( XMPLIB "do" )
+#ENDIF( EXIV2_ENABLE_XMP )
 
 INCLUDE( config/CMakeChecks.txt )
 
@@ -153,7 +170,7 @@ IF( ${EXV_HAVE_STDINT_H} )
     ADD_DEFINITIONS( -DEXV_HAVE_STDINT_H )
 ENDIF( ${EXV_HAVE_STDINT_H} )
 
-ADD_SUBDIRECTORY( xmpsdk )
+#ADD_SUBDIRECTORY( xmpsdk )
 ADD_SUBDIRECTORY( src )
 
 IF( EXIV2_ENABLE_BUILD_SAMPLES )
@@ -164,43 +181,45 @@ IF( EXIV2_ENABLE_BUILD_PO )
     ADD_SUBDIRECTORY( po )
 ENDIF( EXIV2_ENABLE_BUILD_PO )
 
-IF( NOT MSVC )
-    # Issue #722: out of source builds compiled against standard include files such as /usr/local/lib/include/exiv2
-    # do not use CREATE_SYMLINK or CMAKE_CAN_SYMLINK as they don't work on CYGWIN
-    EXECUTE_PROCESS( WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}         COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/src exiv2)
-  IF( EXIV2_ENABLE_BUILD_SAMPLES )
-    EXECUTE_PROCESS( WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/samples COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/src exiv2)
-  ENDIF( EXIV2_ENABLE_BUILD_SAMPLES )
+yong_project_end()
 
-  IF( EXIV2_ENABLE_BUILD_PO )
-    EXECUTE_PROCESS( WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/po      COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/src exiv2)
-  ENDIF( EXIV2_ENABLE_BUILD_PO )
-ENDIF()
-
-##
-# tests
-ADD_CUSTOM_TARGET(tests COMMAND make test  "EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin"  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test/" )
-ADD_CUSTOM_TARGET(teste COMMAND make teste "EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin"  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test/" )
-ADD_CUSTOM_TARGET(testv COMMAND make testv "EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin"  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test/" )
-
-##
-# http://dev.exiv2.org/boards/3/topics/1364
-# effectively does a make doc on the root directory
-# has to run 'make config' and './configure' 
-# and copy bin/taglist to <exiv2dir>/bin/taglist for use by 'make doc'
-IF( MINGW OR UNIX OR APPLE)
-  ADD_CUSTOM_TARGET(doc 
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc"
-    COMMAND chmod +x ./cmake_doc.sh
-    COMMAND ./cmake_doc.sh "${CMAKE_BINARY_DIR}"
-  )
-ENDIF()
-
-##
-# support for test suite TODO: fixup for MSVC and think a bit more before deploying this
-# ENABLE_TESTING()
-# INCLUDE(Dart)
-# ADD_TEST(tests bash -c "cd ${CMAKE_SOURCE_DIR}/test/ ; make EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin" )
+#IF( NOT MSVC )
+#    # Issue #722: out of source builds compiled against standard include files such as /usr/local/lib/include/exiv2
+#    # do not use CREATE_SYMLINK or CMAKE_CAN_SYMLINK as they don't work on CYGWIN
+#    EXECUTE_PROCESS( WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}         COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/src exiv2)
+#  IF( EXIV2_ENABLE_BUILD_SAMPLES )
+#    EXECUTE_PROCESS( WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/samples COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/src exiv2)
+#  ENDIF( EXIV2_ENABLE_BUILD_SAMPLES )
+#
+#  IF( EXIV2_ENABLE_BUILD_PO )
+#    EXECUTE_PROCESS( WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/po      COMMAND ln -sf ${CMAKE_CURRENT_SOURCE_DIR}/src exiv2)
+#  ENDIF( EXIV2_ENABLE_BUILD_PO )
+#ENDIF()
+#
+###
+## tests
+#ADD_CUSTOM_TARGET(tests COMMAND make test  "EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin"  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test/" )
+#ADD_CUSTOM_TARGET(teste COMMAND make teste "EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin"  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test/" )
+#ADD_CUSTOM_TARGET(testv COMMAND make testv "EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin"  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test/" )
+#
+###
+## http://dev.exiv2.org/boards/3/topics/1364
+## effectively does a make doc on the root directory
+## has to run 'make config' and './configure' 
+## and copy bin/taglist to <exiv2dir>/bin/taglist for use by 'make doc'
+#IF( MINGW OR UNIX OR APPLE)
+#  ADD_CUSTOM_TARGET(doc 
+#    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc"
+#    COMMAND chmod +x ./cmake_doc.sh
+#    COMMAND ./cmake_doc.sh "${CMAKE_BINARY_DIR}"
+#  )
+#ENDIF()
+#
+###
+## support for test suite TODO: fixup for MSVC and think a bit more before deploying this
+## ENABLE_TESTING()
+## INCLUDE(Dart)
+## ADD_TEST(tests bash -c "cd ${CMAKE_SOURCE_DIR}/test/ ; make EXIV2_BINDIR=${CMAKE_BINARY_DIR}/bin" )
 
 # That's all Folks!
 ##
