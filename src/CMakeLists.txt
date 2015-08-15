@@ -223,7 +223,7 @@ IF( EXIV2_ENABLE_PNG )
   #  ENDIF()
   yong_add_dependence(exiv2 exiv2
     DEPENDENT_PROJECT zlib
-    COMMIT_HASH 04ad1c7e937d2835c1c54c50bec9cfaa4f43a1c8
+    COMMIT_HASH 1179e5bd226d4c8f45a5e26c3154216fc6c673b1
     DEPENDENT_LIBS zlib)
 ENDIF()
 
